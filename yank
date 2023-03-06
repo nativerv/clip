@@ -1,0 +1,85 @@
+#!/bin/sh
+# shellcheck disable=2009
+
+set -ue
+
+NL=$(printf '\nz') NL=${NL%z}
+
+if_debug() {
+  [ -n "${DEBUG-}" ]
+}
+
+info() {
+  printf '%s: %s\n' "$(basename "${0}")" "${1}" >&2
+}
+
+# prepare the data - stdin or a file
+file="${1:-"/dev/stdin"}"
+tmpfile="$(mktemp)"
+cat "${file}" >"${tmpfile}"
+file="${tmpfile}"
+
+# cleanup temp file for security reasons
+# shellcheck disable=2064
+trap 'rm -f "${file}"' 0 1 2 3 15
+
+is_tty=
+is_x11=
+is_wayland=
+is_termux=
+[ -t 0 ] || [ -t 1 ] || [ -t 2 ] && is_tty=true
+[ "${XDG_SESSION_TYPE-}" = 'X11' ] && [ -n "${DISPLAY-}" ] && is_x11=true
+[ "${XDG_SESSION_TYPE-}" = 'wayland' ] && [ -n "${WAYLAND_DISPLAY-}" ] && is_wayland=true
+[ "$(ps -ef | grep -c 'com.termux')" -gt 1 ] && is_termux=true
+
+if_debug && info "tty='${is_tty}'"
+if_debug && info "x11='${is_x11}'"
+if_debug && info "wayland='${is_wayland}'"
+if_debug && info "termux='${is_termux}'"
+
+# exit 1 if we can't yank on this system in this form
+[ "${is_tty}" != true ] &&
+  [ "${is_x11}" != true ] &&
+  [ "${is_wayland}" != true ] &&
+  [ "${is_termux}" != true ] &&
+  exit 1
+
+convert_mime_type() {
+  # Convert the file if it is image - we can't yank jpeg for some reason
+  case "${mime_type}" in
+    image/png) ;;
+    image/*)
+      exec 3<>"${file}"
+      rm -f "${file}"
+      file="$(mktemp)"
+      convert - png:- <&3 >"${file}"
+      mime_type='image/png'
+      ;;
+    *)
+      # maybe the following ruining some things (like formatting of text)?
+      # maybe i want it to ruin it?
+      # but is this script for me, or potentially for other people? who knows.
+      # mime_type='text/plain'
+      ;;
+  esac
+}
+
+# Determine (and convert) mime type -
+# use it later if supported by the platform
+mime_type="$(file --mime-type -b '-' <"${file}")"
+[ "${is_tty}" != true ] && [ "${is_termux}" != true ] && convert_mime_type
+
+# FIXME: currently tty only supports 'text/plain'
+if [ "${is_tty}" = true ] && [ "${mime_type}" = 'text/plain' ]; then
+  if_debug && info 'yanking with: osc52'
+  printf "\033]52;c;%s\a" "$(printf '%s' "$(cat "${file}")" | base64)"
+elif [ "${is_wayland}" = true ]; then
+  if_debug && info 'yanking with: wayland'
+  wl-copy --trim-newline --type "${mime_type}" <"${file}"
+elif [ "${is_x11}" = true ]; then
+  if_debug && info 'yanking with: x11'
+  xclip -rmlastnl -t "${mime_type}" -in -selection clipboard <"${file}"
+elif [ "${is_termux}" = true ]; then
+  if_debug && info 'yanking with: termux'
+  printf '%s' "$(cat "${file}")" | termux-clipboard-set
+fi
