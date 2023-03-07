@@ -76,16 +76,15 @@ mime_type="$(file --mime-type -b '-' <"${file}")"
 
 # FIXME: currently tty only supports 'text/plain'
 if [ "${is_tty}" = true ] && [ "${mime_type}" = 'text/plain' ]; then
-  if_debug && info 'yanking with: osc52'
+  if_debug && info 'yanking with: osc52' && set -x
   printf "\033]52;%s;%s\a" "${primary:-"c"}" "$(printf '%s' "$(cat "${file}")" | base64)"
 elif [ "${is_wayland}" = true ]; then
-  if_debug && info 'yanking with: wayland'
-  set -x
+  if_debug && info 'yanking with: wayland' && set -x
   wl-copy ${primary:+"--primary"} --trim-newline --type "${mime_type}" <"${file}"
 elif [ "${is_x11}" = true ]; then
-  if_debug && info 'yanking with: x11'
+  if_debug && info 'yanking with: x11' && set -x
   xclip -rmlastnl -t "${mime_type}" -in -selection "${primary:-"clipboard"}"  <"${file}"
 elif [ "${is_termux}" = true ]; then
-  if_debug && info 'yanking with: termux'
+  if_debug && info 'yanking with: termux' && set -x
   [ -z "${primary}" ] && printf '%s' "$(cat "${file}")" | termux-clipboard-set
 fi
