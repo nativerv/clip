@@ -3,8 +3,6 @@
 
 set -ue
 
-NL=$(printf '\nz') NL=${NL%z}
-
 if_debug() {
   [ -n "${DEBUG-}" ]
 }
@@ -12,6 +10,16 @@ if_debug() {
 info() {
   printf '%s: %s\n' "$(basename "${0}")" "${1}" >&2
 }
+
+# parse args
+primary=
+while :; do
+  case "${1-}" in
+    -p|--primary) primary='p' ;;
+    *) break ;;
+  esac
+  shift
+done
 
 # prepare the data - stdin or a file
 file="${1:-"/dev/stdin"}"
@@ -32,10 +40,7 @@ is_termux=
 [ "${XDG_SESSION_TYPE-}" = 'wayland' ] && [ -n "${WAYLAND_DISPLAY-}" ] && is_wayland=true
 [ "$(ps -ef | grep -c 'com.termux')" -gt 1 ] && is_termux=true
 
-if_debug && info "tty='${is_tty}'"
-if_debug && info "x11='${is_x11}'"
-if_debug && info "wayland='${is_wayland}'"
-if_debug && info "termux='${is_termux}'"
+if_debug && info "tty='${is_tty}' x11='${is_x11}' wayland='${is_wayland}' termux='${is_termux}'"
 
 # exit 1 if we can't yank on this system in this form
 [ "${is_tty}" != true ] &&
@@ -45,7 +50,7 @@ if_debug && info "termux='${is_termux}'"
   exit 1
 
 convert_mime_type() {
-  # Convert the file if it is image - we can't yank jpeg for some reason
+  # convert the file if it is image - we can't yank jpeg for some reason
   case "${mime_type}" in
     image/png) ;;
     image/*)
@@ -72,14 +77,15 @@ mime_type="$(file --mime-type -b '-' <"${file}")"
 # FIXME: currently tty only supports 'text/plain'
 if [ "${is_tty}" = true ] && [ "${mime_type}" = 'text/plain' ]; then
   if_debug && info 'yanking with: osc52'
-  printf "\033]52;c;%s\a" "$(printf '%s' "$(cat "${file}")" | base64)"
+  printf "\033]52;%s;%s\a" "${primary:-"c"}" "$(printf '%s' "$(cat "${file}")" | base64)"
 elif [ "${is_wayland}" = true ]; then
   if_debug && info 'yanking with: wayland'
-  wl-copy --trim-newline --type "${mime_type}" <"${file}"
+  set -x
+  wl-copy ${primary:+"--primary"} --trim-newline --type "${mime_type}" <"${file}"
 elif [ "${is_x11}" = true ]; then
   if_debug && info 'yanking with: x11'
-  xclip -rmlastnl -t "${mime_type}" -in -selection clipboard <"${file}"
+  xclip -rmlastnl -t "${mime_type}" -in -selection "${primary:-"clipboard"}"  <"${file}"
 elif [ "${is_termux}" = true ]; then
   if_debug && info 'yanking with: termux'
-  printf '%s' "$(cat "${file}")" | termux-clipboard-set
+  [ -z "${primary}" ] && printf '%s' "$(cat "${file}")" | termux-clipboard-set
 fi
