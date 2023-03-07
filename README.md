@@ -18,22 +18,35 @@ Quickly access your clipboard on the command line, on any platform.
 
 ### `yank`
 
-Usage: `yank [-p] [file]`
+#### Usage
+
+`yank [-p] [file]`
 
 Yanks specified file to the system clipboard selection.
 
 If no file is specified, uses standard input instead.
 
-Flags:
+#### Flags:
 
-- **TODO**: `-p`, `--primary` yanks to the system primary selection instead if available on the platform
+- `-p`, `--primary` yanks to the system primary selection instead if available on the platform
 
-### `put`
+#### Environment variables:
 
-Usage: `put [-p]`
+- `DEBUG` if set, print extra info to standard error
+
+### **TODO**: `put`
+
+#### Usage
+
+`put [-p]`
 
 Puts the contents of system clipboard selection to the standard output.
 
-Flags:
+#### Flags:
 
-- **TODO**: `-p`, `--primary` puts to the primary selection instead if available on the platform
+- `-p`, `--primary` puts to the primary selection instead if available on the platform
+
+#### Environment variables:
+
+- `DEBUG` if set, print extra info to standard error
+
