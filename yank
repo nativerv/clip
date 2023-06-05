@@ -16,6 +16,9 @@ primary=
 while :; do
   case "${1-}" in
     -p|--primary) primary='p' ;;
+    -?*) # unknown option
+      info "ERROR: unknown option: ${1}" && exit 1
+      ;;
     *) break ;;
   esac
   shift
@@ -74,10 +77,10 @@ convert_mime_type() {
 mime_type="$(file --mime-type -b '-' <"${file}")"
 [ "${is_tty}" != true ] && [ "${is_termux}" != true ] && convert_mime_type
 
-# FIXME: currently tty only supports 'text/plain'
+# FIXME: osc52 variant currently tty only supports 'text/plain'
 if [ "${is_tty}" = true ] && [ "${mime_type}" = 'text/plain' ]; then
   if_debug && info 'yanking with: osc52' && set -x
-  printf "\033]52;%s;%s\a" "${primary:-"c"}" "$(printf '%s' "$(cat "${file}")" | base64)"
+  printf "\033]52;%s;%s\a" "${primary:-"c"}" "$(cat "${file}" | base64)"
 elif [ "${is_wayland}" = true ]; then
   if_debug && info 'yanking with: wayland' && set -x
   wl-copy ${primary:+"--primary"} --trim-newline --type "${mime_type}" <"${file}"
