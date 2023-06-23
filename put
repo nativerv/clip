@@ -4,8 +4,8 @@
 set -ue
 
 usage() {
-  printf 'put: usage: put [-p] [-t TYPE]'
-  printf 'flags:'
+  printf 'put: usage: put [-p] [-t TYPE]\n'
+  printf 'flags:\n'
   printf '  -p, --primary       puts to the system primary selection instead if available on the platform\n'
   printf '  -t, --type TYPE     specify MIME type\n'
   printf '  --help              show usage\n'
@@ -16,7 +16,7 @@ if_debug() {
 }
 
 info() {
-  printf '%s: %s\n' "$(basename "${0}")" "${1}" >&2
+  printf 'put: %s\n' "${1}" >&2
 }
 
 # parse args

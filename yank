@@ -4,8 +4,8 @@
 set -ue
 
 usage() {
-  printf 'yank: usage: yank [-p]'
-  printf 'flags:'
+  printf 'yank: usage: yank [-p]\n'
+  printf 'flags:\n'
   printf '  -p, --primary       yanks to the system primary selection instead if available on the platform\n'
   printf '  --help              show usage\n'
 }
@@ -15,7 +15,7 @@ if_debug() {
 }
 
 info() {
-  printf '%s: %s\n' "$(basename "${0}")" "${1}" >&2
+  printf 'yank: %s\n' "${1}" >&2
 }
 
 # parse args
