@@ -3,6 +3,13 @@
 
 set -ue
 
+usage() {
+  printf 'yank: usage: yank [-p]'
+  printf 'flags:'
+  printf '  -p, --primary       yanks to the system primary selection instead if available on the platform\n'
+  printf '  --help              show usage\n'
+}
+
 if_debug() {
   [ -n "${DEBUG-}" ]
 }
@@ -16,6 +23,7 @@ primary=
 while :; do
   case "${1-}" in
     -p|--primary) primary='p' ;;
+    --help) usage && exit ;;
     -?*) # unknown option
       info "ERROR: unknown option: ${1}" && exit 1
       ;;

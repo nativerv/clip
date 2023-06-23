@@ -1,0 +1,62 @@
+#!/bin/sh
+# shellcheck disable=2009
+
+set -ue
+
+usage() {
+  printf 'put: usage: put [-p] [-t TYPE]'
+  printf 'flags:'
+  printf '  -p, --primary       puts to the system primary selection instead if available on the platform\n'
+  printf '  -t, --type TYPE     specify MIME type\n'
+  printf '  --help              show usage\n'
+}
+
+if_debug() {
+  [ -n "${DEBUG-}" ]
+}
+
+info() {
+  printf '%s: %s\n' "$(basename "${0}")" "${1}" >&2
+}
+
+# parse args
+primary=
+type=
+while :; do
+  case "${1-}" in
+    -p|--primary) primary='p' ;;
+    -y|--type) type="${2}" && shift ;;
+    --help) usage && exit ;;
+    -?*) # unknown option
+      info "ERROR: unknown option: ${1}" && exit 1
+      ;;
+    *) break ;;
+  esac
+  shift
+done
+
+is_tty=
+is_x11=
+is_wayland=
+is_termux=
+[ -t 0 ] || [ -t 1 ] || [ -t 2 ] && is_tty=true
+[ "${XDG_SESSION_TYPE-}" = 'X11' ] && [ -n "${DISPLAY-}" ] && is_x11=true
+[ "${XDG_SESSION_TYPE-}" = 'wayland' ] && [ -n "${WAYLAND_DISPLAY-}" ] && is_wayland=true
+[ "$(ps -ef | grep -c 'com.termux')" -gt 1 ] && is_termux=true
+
+if_debug && info "tty='${is_tty}' x11='${is_x11}' wayland='${is_wayland}' termux='${is_termux}'"
+
+# FIXME/TODO: implement ocs52
+# if [ "${is_tty}" = true ] && [ "${mime_type}" = 'text/plain' ]; then
+#   if_debug && info 'putting with: osc52' && set -x
+#   printf "\033]52;%s;%s\a" "${primary:-"c"}" "$(cat "${file}" | base64)"
+if [ "${is_wayland}" = true ]; then
+  if_debug && info 'putting with: wayland' && set -x
+  wl-paste ${type:+"--type"} ${type:+"${type}"} ${primary:+"--primary"} #--no-newline
+elif [ "${is_x11}" = true ]; then
+  if_debug && info 'putting with: x11' && set -x
+  xclip -out -selection "${primary:-"clipboard"}" ${type:+"-t"} ${type:+"${type}"} 
+elif [ "${is_termux}" = true ]; then
+  if_debug && info 'putting with: termux' && set -x
+  [ -z "${primary}" ] && termux-clipboard-get
+fi
