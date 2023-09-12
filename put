@@ -25,7 +25,7 @@ type=
 while :; do
   case "${1-}" in
     -p|--primary) primary='p' ;;
-    -y|--type) type="${2}" && shift ;;
+    -t|--type) type="${2}" && shift ;;
     --help) usage && exit ;;
     -?*) # unknown option
       info "ERROR: unknown option: ${1}" && exit 1

@@ -86,6 +86,7 @@ mime_type="$(file --mime-type -b '-' <"${file}")"
 [ "${is_tty}" != true ] && [ "${is_termux}" != true ] && convert_mime_type
 
 # FIXME: osc52 variant currently tty only supports 'text/plain'
+if_debug && info "yanking to: ${primary:-c}" && set -x
 if [ "${is_tty}" = true ] && [ "${mime_type}" = 'text/plain' ]; then
   if_debug && info 'yanking with: osc52' && set -x
   printf "\033]52;%s;%s\a" "${primary:-"c"}" "$(cat "${file}" | base64)"
