@@ -9,6 +9,22 @@ Quickly access your clipboard on the command line, on any platform.
 - Linux/BSD - Wayland (`wl-clipboard`)
 - Android - Termux (`termux-clipboard-set`, `termux-clipboard-get`)
 
+## Installation
+
+### Nix
+
+Use the `default` or `clip` package in your config.
+
+```bash
+# Try
+nix shell github:nativerv/clip
+nix shell github:nativerv/clip --command yank
+nix shell github:nativerv/clip --command put
+
+# Install statefully
+nix profile install github:nativerv/clip
+```
+
 ## Dependencies
 
 - `xclip`, `wl-clipboard` or `termux` (depending on platform): clipboard access
